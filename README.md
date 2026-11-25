@@ -1,22 +1,20 @@
 # Speed Monitor
 
-A personal, foreground iPhone GPS speed monitor. No account or API key required for modest personal testing. Not a safety-certified instrument.
+A personal foreground iPhone GPS speed monitor using TomTom Snap to Roads. No navigation destination required.
 
-## Install
-1. Open the published HTTPS site in Safari on iPhone. Use Share > Add to Home Screen (enable Open as Web App if offered).
-2. Open the icon while parked. Tap Test sound, confirm it is audible at your intended volume and audio output, and try Demo.
-3. Tap Exit demo, then Start drive. Allow location access with Precise Location enabled. Keep the app in the foreground, mounted safely.
-4. Stop monitoring when parked. Do not manipulate your phone while driving.
+## Setup
+1. Create an account at https://my.tomtom.com/ and create an API key with Snap to Roads (TomTom Maps, not Orbis preview) access.
+2. Restrict the key to the website origin if supported and set account-side spending/usage limits. Never commit a key to this repository.
+3. Open the HTTPS app in Safari, add to Home Screen, and open Set up TomTom road data while parked. Save your key in the app. The key is stored in local browser storage, not on a server or in the repository; browser storage is not a secure secret vault.
+4. Test sound, then Start drive, allow Precise Location and keep the app visible. TomTom requires at least two distinct real GPS positions; no location is fabricated. GPS speed is available without a key, but automatic limits are not.
+5. Observe posted signs and your vehicle speedometer. Do not interact with the phone while driving.
 
-## Behavior
-GPS speed is displayed as whole mph and internally rounded to 0.1 mph and compared against an explicit mapped limit. Above the limit turns red and plays three short beeps once per overspeed episode; the alert rearms after two seconds at/below limit. Missing speed, stale or inaccurate GPS, missing/ambiguous mapped limits and certain conditional speed tags produce neutral state rather than green. No default limits are inferred. Map matching uses distance and heading and is heuristic, not navigation-grade. Parallel roads, intersections, temporary limits and missing map data can still lead to incorrect results. Always follow posted signs and your vehicle speedometer.
+## How it works
+The app sends a short rolling GPS trace to TomTom's map-matching API, looks up the speed limit on the road element referenced by the last projected point, checks match confidence and snap distance, converts speed units, and compares GPS speed with the returned maximum. Unmatched or stale positions, missing limits, uncertain direction, and network failures remain neutral. Map data can still be wrong and may not reflect temporary, school-zone, or variable limits.
 
-The app requests a screen wake lock and releases it when stopped. It does not monitor or warn reliably with the screen locked, app backgrounded, or audio interrupted; it is not a native app or CarPlay app. The tone is in-app audio, not an iOS notification. Test actual audio output before use. A demo works without GPS or network after the page loads.
+Requests are throttled to one per five seconds, with backoff on errors and a local 2,300-request-per-calendar-month cap per browser. The cap is not an account-wide billing guarantee; TomTom pricing and transaction accounting apply. The free evaluation is for limited testing; continuous driving may require paid service. See https://docs.tomtom.com/pricing. The app retains no trip history; a small recent trace is held in memory and sent to TomTom, which receives coordinates, timestamps, API key and IP address. The key and usage count are stored locally. No analytics. The app does not reliably monitor when backgrounded or locked.
 
-## Hosting
-Enable GitHub Pages from the main branch root in Settings > Pages. All assets are relative to the repository path.
+## Source
+TomTom Snap to Roads API: https://docs.tomtom.com/snap-to-roads-api/documentation/snap-to-roads-api/synchronous-snap-to-roads
 
-## Map service and privacy
-Small bounding-box queries use spatially clipped road geometry. Road geometry is retrieved from the public OpenStreetMap Overpass endpoints (Private.coffee first, overpass-api.de fallback) using rounded coordinates for nearby areas, not for every GPS fix. The app caches up to ten areas in memory, throttles requests to normally at most one every 20 seconds, only near the edge of a cached area, with bounded failure backoff, and limits requests to 150 and retrieved data to approximately 12 MB per UTC day per browser (a final response may exceed that byte threshold). Public server limits, network loss and missing map data may make the speed limit unavailable; this implementation is for modest individual testing, not a public production deployment. Production use should use a contracted map matching/speed-limit API or a self-hosted OSM service. No analytics, trip history, or coordinate persistence in the app; only a map usage counter is stored. The map service receives request coordinates and IP address under its own policies. The service worker caches the app shell, not road data.
-
-Map data attribution: © OpenStreetMap contributors, https://www.openstreetmap.org/copyright.
+GitHub Pages serves the static app shell. The provider must be configured on each browser/device. Map data © TomTom.
